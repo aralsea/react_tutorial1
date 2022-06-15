@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
@@ -6,10 +6,41 @@ function Square(props) {
     return (
         <button className="square" onClick={props.onClick}>
             {props.value}
-        </button >
+        </button>
     );
 }
-class Board extends React.Component {
+
+function Board_func(props) {
+
+    function renderSquare(i) {
+        return (
+            <Square
+                value={props.squares[i]}
+                onClick={() => props.onClick(i)}
+            />);
+    }
+
+    return (
+        <div>
+            <div className="board-row">
+                {renderSquare(0)}
+                {renderSquare(1)}
+                {renderSquare(2)}
+            </div>
+            <div className="board-row">
+                {renderSquare(3)}
+                {renderSquare(4)}
+                {renderSquare(5)}
+            </div>
+            <div className="board-row">
+                {renderSquare(6)}
+                {renderSquare(7)}
+                {renderSquare(8)}
+            </div>
+        </div>
+    );
+}
+/*class Board extends React.Component {
 
     renderSquare(i) {
         return (
@@ -42,9 +73,70 @@ class Board extends React.Component {
         );
     }
 
+}*/
+
+function Game_func() {
+    const [history, setHistory] = useState([{ squares: Array(9).fill(null) }]);
+    const [xIsNext, setXIsNext] = useState(true);
+    const [stepNumber, setStepNumber] = useState(0)
+
+    function handleClick(i) {
+        const _history = history.slice(0, stepNumber + 1);
+        const current = _history[_history.length - 1];
+        const squares = current.squares.slice();//配列のコピーを渡す
+        if (calculateWinner(squares) || squares[i]) {
+            return;
+        }
+        squares[i] = xIsNext ? 'X' : 'O';
+        setHistory(_history.concat([{
+            squares: squares,
+        }]));
+        setStepNumber(_history.length);
+        setXIsNext(!xIsNext);
+    }
+
+    function jumpTo(step) {
+        setStepNumber(step);
+        setXIsNext((step % 2) == 0);
+    }
+
+    const current = history[stepNumber];
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+        const desc = move ?
+            'Go to move #' + move :
+            'Go to game start';
+        return (
+            <li key={move}>
+                <button onClick={() => jumpTo(move)}>{desc}</button>
+            </li>
+        );//keyはリストの中の要素を識別するためのもの．例えばリストの中身の順番が入れ替わったとき，要素のkeyを保持しない場合レンダリングにおいて新しくオブジェクトを作る必要があるが，keyをReactが覚えていれば既にあるものを使える
+    });
+    let status;
+    if (winner) {
+        status = 'winner : ' + winner;
+    } else {
+        status = 'Next player: ' + (xIsNext ? 'X' : 'O');
+    }
+
+    return (
+        <div className="game">
+            <div className="game-board">
+                <Board_func
+                    squares={current.squares}//ここの波括弧は何？
+                    onClick={(i) => handleClick(i)}
+                />
+            </div>
+            <div className="game-info">
+                <div>{status}</div>
+                <ol>{moves}</ol>
+            </div>
+        </div>
+    );
 }
 
-class Game extends React.Component {
+/*class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -111,7 +203,7 @@ class Game extends React.Component {
     jumpTo(step) {
         this.setState({ stepNumber: step, xIsNext: (step % 2) == 0 })
     }
-}
+}*/
 
 function calculateWinner(squares) {
     const lines = [
@@ -135,5 +227,5 @@ function calculateWinner(squares) {
 // ========================================
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<Game />);
+root.render(<Game_func />);
 
